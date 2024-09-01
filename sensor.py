@@ -77,7 +77,7 @@ def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO
   # Set the logging level for the root logger
   logging.getLogger().setLevel(numeric_level)
 
-  # Log the version and command-line arguments
+  # Log the command-line arguments
   logging.getLogger().info(f'Command-line arguments: {sys.argv[1:]}')
 
 
@@ -87,20 +87,16 @@ class Sensor(ABC):
     self._hash = hash
     self._measurement_frequency = measurement_frequency
     self._upload_interval = upload_interval
+    self._alive = True
 
-    if not os.path.exists('pending'):
-      os.makedirs('pending')
+    # Create necessary directories
+    os.makedirs('pending', exist_ok=True)
+    os.makedirs('uploaded', exist_ok=True)
 
-    if not os.path.exists('uploaded'):
-      os.makedirs('uploaded')
-
-    # In case there are some old files
+    # Initialize the upload queue
     self._upload_queue = deque(sorted([os.path.join('pending', f) for f in os.listdir('pending') if os.path.isfile(os.path.join('pending', f))]))
 
     self._file = None
-
-    # Initialize the upload thread
-    self._alive = True
     self.upload_event = threading.Event()
     self.upload_thread = threading.Thread(target=self._upload_data_loop)
     self.upload_thread.start()
@@ -111,20 +107,21 @@ class Sensor(ABC):
 
     self.trigger_upload()
 
-  def write_to_file(self, data: str):
-    if not self._file:
-      return
-
-    self._file.write(data)
-    self._file.write('\n')
-
   @abstractmethod
   def write_header(self):
+    '''Abstract method to write the header to the CSV file.'''
     pass
 
   @abstractmethod
   def write_measurement(self):
+    '''Abstract method to write measurement data to the CSV file.'''
     pass
+
+  def write_to_file(self, data: str):
+    '''Helper method to write data to the file.'''
+    if self._file:
+      self._file.write(data)
+      self._file.write('\n')
 
   def _handle_shutdown(self, signum, frame):
     '''Gracefully handle shutdown signals.'''
@@ -139,13 +136,13 @@ class Sensor(ABC):
       self._file = None
       self._upload_queue.append(self._filename)
 
-    self._filename = 'pending/' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.csv'
+    self._filename = os.path.join('pending', datetime.now().strftime('%Y%m%d_%H%M%S.csv'))
 
     if self._alive:
       try:
         self._file = open(self._filename, 'w')
         self.write_header()
-        logging.info(f"New file '{self._filename}'")
+        logging.info(f"New file '{self._filename}' created")
       except IOError as e:
         logging.error(f"Error opening file '{self._filename}': {e}")
         self._file = None
@@ -153,18 +150,20 @@ class Sensor(ABC):
     self.upload_event.set()
 
   def _upload_data_loop(self):
-    '''The main loop that runs in a separate thread.'''
+    '''The main loop that runs in a separate thread to handle data uploads.'''
     while self._alive:
       self.upload_event.wait()  # Wait until the event is set
       self._upload_data()       # Perform the upload
       self.upload_event.clear() # Reset the event to pause the thread
 
+    # Final upload after shutdown
     logging.warning('Upload thread stopped - final upload attempt')
     self.trigger_upload()
-    self._upload_data()       # Perform the upload
+    self._upload_data()
     logging.warning('Upload thread stopped')
 
   def _upload_data(self):
+    '''Perform the data upload to the server.'''
     try:
       while self._upload_queue:
         filename = self._upload_queue[0]
@@ -172,20 +171,21 @@ class Sensor(ABC):
         with open(filename, 'r') as file:
           csv_data = file.readlines()
 
-        r = requests.post('https://bicycledata.ochel.se:80/api/sensor/update', json={'hash': self._hash, 'sensor': self._name, 'csv_data': csv_data})
+        r = requests.post('https://bicycledata.ochel.se:80/api/sensor/update', json={'hash': self._hash, 'sensor': self._name, 'csv_data': csv_data}, timeout=10)
         logging.info(f'{r.status_code}: {filename}')
 
         if r.status_code == 200:
           shutil.move(filename, 'uploaded')
           self._upload_queue.popleft()
         else:
-          logging.info(r._content.decode('ascii').strip())
+          logging.info(r.text.strip())
           break
-    except Exception:
-      logging.info("Something went wrong; we'll try later again")
+    except Exception as e:
+      logging.error("Something went wrong during the upload process")
       logging.error(traceback.format_exc())
 
   def main(self):
+    '''Main loop for handling sensor measurements and triggering uploads.'''
     _time = time.time()
 
     while self._alive:
@@ -197,10 +197,9 @@ class Sensor(ABC):
           _time = current_time
           self.trigger_upload()
 
-        time.sleep(1.0/self._measurement_frequency)
-
+        time.sleep(1.0 / self._measurement_frequency)
       except Exception as e:
-        logging.error(e)
+        logging.error(f"Error during main loop: {e}")
         logging.error(traceback.format_exc())
 
     # Trigger final upload and clean up
@@ -211,16 +210,17 @@ class Sensor(ABC):
     self.upload_thread.join()
     logging.warning('Process stopped')
 
-#
-# The custom sensor code goes here
+
 class SensorTemplate(Sensor):
+  '''Example subclass that implements the abstract methods of Sensor.'''
   def write_header(self):
-    '''Override the header writing method'''
+    '''Override to write the header to the CSV file.'''
     self.write_to_file('time')
 
   def write_measurement(self):
-    '''Override the measurement writing method'''
+    '''Override to write measurement data to the CSV file.'''
     self.write_to_file(str(time.time()))
+
 
 if __name__ == '__main__':
   PARSER = argparse.ArgumentParser(
