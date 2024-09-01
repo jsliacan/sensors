@@ -173,8 +173,11 @@ class Sensor:
         logging.error(traceback.format_exc())
       except KeyboardInterrupt:
         self._alive = False
+        self.upload_event.set()  # Ensure thread wakes up to check _alive flag
         print('\r', end='')
         logging.warning('shutdown due to keyboard interrupt')
+
+    self.upload_thread.join()  # Ensure thread cleanup
 
     if self._file:
       self.trigger_upload()
