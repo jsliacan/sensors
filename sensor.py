@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 import traceback
+from abc import ABC, abstractmethod
 from collections import deque
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -80,7 +81,7 @@ def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO
   logging.getLogger().info(f'Command-line arguments: {sys.argv[1:]}')
 
 
-class Sensor:
+class Sensor(ABC):
   def __init__(self, name, hash, measurement_frequency, upload_interval):
     self._name = name
     self._hash = hash
@@ -110,6 +111,21 @@ class Sensor:
 
     self.trigger_upload()
 
+  def write_to_file(self, data: str):
+    if not self._file:
+      return
+
+    self._file.write(data)
+    self._file.write('\n')
+
+  @abstractmethod
+  def write_header(self):
+    pass
+
+  @abstractmethod
+  def write_measurement(self):
+    pass
+
   def _handle_shutdown(self, signum, frame):
     '''Gracefully handle shutdown signals.'''
     self._alive = False
@@ -128,7 +144,7 @@ class Sensor:
     if self._alive:
       try:
         self._file = open(self._filename, 'w')
-        self._file.write('time\n')
+        self.write_header()
         logging.info(f"New file '{self._filename}'")
       except IOError as e:
         logging.error(f"Error opening file '{self._filename}': {e}")
@@ -174,10 +190,7 @@ class Sensor:
 
     while self._alive:
       try:
-        # Do Stuff HERE
-        data = str(time.time())
-        if self._file:
-          self._file.write(data + "\n")
+        self.write_measurement()
 
         current_time = time.time()
         if current_time - _time >= self._upload_interval:
@@ -198,6 +211,17 @@ class Sensor:
     self.upload_thread.join()
     logging.warning('Process stopped')
 
+#
+# The custom sensor code goes here
+class SensorTemplate(Sensor):
+  def write_header(self):
+    '''Override the header writing method'''
+    self.write_to_file('time')
+
+  def write_measurement(self):
+    '''Override the measurement writing method'''
+    self.write_to_file(str(time.time()))
+
 if __name__ == '__main__':
   PARSER = argparse.ArgumentParser(
     description='Sensor Template',
@@ -215,6 +239,6 @@ if __name__ == '__main__':
   # Configure logging
   configure(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel)
 
-  sensor = Sensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
+  sensor = SensorTemplate(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
   sensor.main()
   logging.info('Process stopped')
