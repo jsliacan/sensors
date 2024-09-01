@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import shutil
+import signal
 import sys
 import threading
 import time
@@ -101,10 +102,19 @@ class Sensor:
     self._alive = True
     self.upload_event = threading.Event()
     self.upload_thread = threading.Thread(target=self._upload_data_loop)
-    #self.upload_thread.daemon = True
     self.upload_thread.start()
 
+    # Handle termination signals
+    signal.signal(signal.SIGTERM, self._handle_shutdown)
+    signal.signal(signal.SIGINT, self._handle_shutdown)
+
     self.trigger_upload()
+
+  def _handle_shutdown(self, signum, frame):
+    '''Gracefully handle shutdown signals.'''
+    self._alive = False
+    self.upload_event.set()  # Ensure thread wakes up to check _alive flag
+    logging.warning(f'Shutdown due to signal {signum}')
 
   def trigger_upload(self):
     '''Trigger the upload event.'''
@@ -115,13 +125,14 @@ class Sensor:
 
     self._filename = 'pending/' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.csv'
 
-    try:
-      self._file = open(self._filename, 'w')
-      self._file.write('time\n')
-      logging.info(f"New file '{self._filename}'")
-    except IOError as e:
-      logging.error(f"Error opening file '{self._filename}': {e}")
-      self._file = None
+    if self._alive:
+      try:
+        self._file = open(self._filename, 'w')
+        self._file.write('time\n')
+        logging.info(f"New file '{self._filename}'")
+      except IOError as e:
+        logging.error(f"Error opening file '{self._filename}': {e}")
+        self._file = None
 
     self.upload_event.set()
 
@@ -131,7 +142,11 @@ class Sensor:
       self.upload_event.wait()  # Wait until the event is set
       self._upload_data()       # Perform the upload
       self.upload_event.clear() # Reset the event to pause the thread
-    logging.warning('upload thread stopped')
+
+    logging.warning('Upload thread stopped - final upload attempt')
+    self.trigger_upload()
+    self._upload_data()       # Perform the upload
+    logging.warning('Upload thread stopped')
 
   def _upload_data(self):
     try:
@@ -148,9 +163,10 @@ class Sensor:
           shutil.move(filename, 'uploaded')
           self._upload_queue.popleft()
         else:
+          logging.info(r._content.decode('ascii').strip())
           break
     except Exception:
-      logging.info(f'Something went wrong; we\'ll try later again')
+      logging.info("Something went wrong; we'll try later again")
       logging.error(traceback.format_exc())
 
   def main(self):
@@ -160,7 +176,8 @@ class Sensor:
       try:
         # Do Stuff HERE
         data = str(time.time())
-        self._file.write(data + "\n")
+        if self._file:
+          self._file.write(data + "\n")
 
         current_time = time.time()
         if current_time - _time >= self._upload_interval:
@@ -168,20 +185,18 @@ class Sensor:
           self.trigger_upload()
 
         time.sleep(1.0/self._measurement_frequency)
+
       except Exception as e:
         logging.error(e)
         logging.error(traceback.format_exc())
-      except KeyboardInterrupt:
-        self._alive = False
-        self.upload_event.set()  # Ensure thread wakes up to check _alive flag
-        print('\r', end='')
-        logging.warning('shutdown due to keyboard interrupt')
 
-    self.upload_thread.join()  # Ensure thread cleanup
-
+    # Trigger final upload and clean up
     if self._file:
       self.trigger_upload()
-      self._file.close()
+
+    # Wait for the upload thread to finish
+    self.upload_thread.join()
+    logging.warning('Process stopped')
 
 if __name__ == '__main__':
   PARSER = argparse.ArgumentParser(
@@ -193,7 +208,7 @@ if __name__ == '__main__':
   PARSER.add_argument('--name', type=str, required=True, help='[required] name of the sensor')
   PARSER.add_argument('--loglevel', type=str, default='INFO', help='Set the logging level (e.g., DEBUG, INFO, WARNING)')
   PARSER.add_argument('--measurement-frequency', type=float, default=1.0, help='Frequency of sensor measurements in 1/s')
-  PARSER.add_argument('--stdout', action='store_true', help='enables logging to stdout')
+  PARSER.add_argument('--stdout', action='store_true', help='Enables logging to stdout')
   PARSER.add_argument('--upload-interval', type=float, default=300.0, help='Interval between uploads in seconds')
   ARGS = PARSER.parse_args()
 
@@ -202,5 +217,4 @@ if __name__ == '__main__':
 
   sensor = Sensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
   sensor.main()
-
-  logging.warning('Process stopped')
+  logging.info('Process stopped')
