@@ -1,4 +1,5 @@
 import argparse
+import csv
 import logging
 import os
 import shutil
@@ -15,11 +16,11 @@ from logging.handlers import RotatingFileHandler
 import requests
 
 
-def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO') -> None:
+def configure_logging(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO', logfile: str = 'sensor_template.log') -> logging.Logger:
   '''Configure logging.'''
 
   log_dir = 'log'
-  filename = 'sensor_template.log'
+  filename = logfile
 
   # Ensure the log directory exists
   if not os.path.isdir(log_dir):
@@ -77,6 +78,8 @@ def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO
 
   # Log the command-line arguments
   logging.getLogger().info(f'Command-line arguments: {sys.argv[1:]}')
+
+  return logging.getLogger()
 
 
 class BicycleSensor(ABC):
