@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 import requests
 
 
-def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO') -> None:
+def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO') -> logging.Logger:
   '''Configure logging.'''
 
   log_dir = 'log'
@@ -78,6 +78,7 @@ def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO
   # Log the command-line arguments
   logging.getLogger().info(f'Command-line arguments: {sys.argv[1:]}')
 
+  return logging.getLogger()
 
 class BicycleSensor(ABC):
   def __init__(self, name, hash, measurement_frequency, upload_interval):
