@@ -15,11 +15,11 @@ from logging.handlers import RotatingFileHandler
 import requests
 
 
-def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO') -> None:
+def configure(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO', logfilename: str = 'sensor_template.log') -> None:
   '''Configure logging.'''
 
   log_dir = 'log'
-  filename = 'sensor_template.log'
+  filename = logfilename
 
   # Ensure the log directory exists
   if not os.path.isdir(log_dir):
