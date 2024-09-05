@@ -147,7 +147,6 @@ class BicycleSensor(ABC):
       except IOError as e:
         logging.error(f"Error opening file '{self._filename}': {e}")
         self._file = None
-
     self.upload_event.set()
 
   def _upload_data_loop(self):
@@ -169,6 +168,16 @@ class BicycleSensor(ABC):
       while self._upload_queue:
         filename = self._upload_queue[0]
 
+        # Make sure to format USB device as ext4 and put a filesystem on it. The
+        # code expects the USB to be `bikedata` and mounts to
+        # `/media/vti/bikedata` on the RPi.
+    
+        # I used Disk Utility on Fedora and once I formatted the USB disk I
+        # created a partition called `bikedata` on it (ext4 type). That's it.
+        
+        # Write data to USB drive as a backup
+        #shutil.copyfile(filename, "/media/vti/bikedata/"+filename.split("/")[-1])
+        
         with open(filename, 'r') as file:
           csv_data = file.readlines()
 

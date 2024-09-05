@@ -3,3 +3,12 @@ __pycache__/
 /log/
 /pending/
 /uploaded/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

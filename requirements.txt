@@ -1,6 +1,8 @@
 certifi==2024.8.30
 charset-normalizer==3.3.2
 idna==3.8
+lgpio==0.2.2.0
 requests==2.32.3
+rpi-lgpio==0.6
 smbus2==0.4.3
 urllib3==2.2.2

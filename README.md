@@ -1,26 +1,43 @@
 # Sensor Template
 
-## Overview
+## Sensor information on the server
 
-The `sensor_template` repository provides a robust framework for
-implementing a custom bicycle sensor. The framework handles file
-system operations, including the creation and management of data
-files, and automates the upload of sensor measurements to a remote
-server. This allows developers to focus on their custom sensor logic
-by extending the provided `BicycleSensor` class and implementing the
-necessary methods.
+Each device (sensor) needs to have the relevant section updated in the config on the server. This is the example section for the sensors in this repository.
 
-## Features
-
-- **File System Management**: Automatically creates directories and
-  manages data files for storing sensor measurements.
-- **Automated Data Upload**: Periodically uploads sensor data to a
-  configured remote server, with customizable upload intervals.
-- **Customizable Sensor Logic**: Developers can create custom sensors
-  by extending the `BicycleSensor` class and implementing specific
-  methods for data handling.
-- **Logging**: Configurable logging with options for file-based
-  logging, rotating logs, and console output.
+```json
+"sensors":[
+   {
+      "args":[
+         "--upload-interval",
+         "5"
+      ],
+      "entry_point":"lidar.py",
+      "git_url":"https://github.com/jsliacan/sensors.git",
+      "git_version":"main",
+      "name":"VTIGarminLidarLiteV3"
+   },
+   {
+      "args":[
+         "--upload-interval",
+         "5"
+      ],
+      "entry_point":"button.py",
+      "git_url":"https://github.com/jsliacan/sensors.git",
+      "git_version":"main",
+      "name":"VTIButton"
+   },
+   {
+      "args":[
+         "--upload-interval",
+         "5"
+      ],
+      "entry_point":"ultrasound.py",
+      "git_url":"https://github.com/jsliacan/sensors.git",
+      "git_version":"main",
+      "name":"VTIUltrasound"
+   }
+]
+```
 
 ## Getting Started
 
