@@ -176,7 +176,7 @@ class BicycleSensor(ABC):
         # created a partition called `bikedata` on it (ext4 type). That's it.
         
         # Write data to USB drive as a backup
-        shutil.copyfile(filename, "/media/vti/bikedata/"+filename.split("/")[-1])
+        #shutil.copyfile(filename, "/media/vti/bikedata/"+filename.split("/")[-1])
         
         with open(filename, 'r') as file:
           csv_data = file.readlines()
