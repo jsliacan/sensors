@@ -38,6 +38,16 @@ Each device (sensor) needs to have the relevant section updated in the config on
    }
 ]
 ```
+## Backing up data onto USB-storage
+
+It is possible to copy the data files at regular intervals during the activity to a USB storage attached to the RPi. [This line](https://github.com/jsliacan/sensors/blob/339f89daedd6638f16d5fa82f46305602f1eb67a/BicycleSensor.py#L179) should do it:
+```python
+    shutil.copyfile(filename, "/media/vti/bikedata/"+filename.split("/")[-1])
+```
+Clearly, there are caveats. 
+1. The USB needs to be attached, otherwise this will crash the process. 
+2. Make sure to format USB device as ext4 and put a filesystem on it. The code expects the USB to be `bikedata` and mounts to `/media/vti/bikedata` on the RPi.
+I used Disk Utility on Fedora and once I formatted the USB disk I created a partition called `bikedata` on it (ext4 type). That's it.
 
 ## Getting Started
 
