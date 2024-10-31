@@ -33,7 +33,7 @@ from BicycleSensor import BicycleSensor, configure_logging
 
 class LidarSensor(BicycleSensor):
 
-  def __init__(self, name, hash, measurement_frequency, upload_interval, logger):
+  def __init__(self, name, hash, measurement_frequency, upload_interval):
     BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval)
 
     self.BUS = 1 # on RPi5, it's bus no.1 - can check with `ls /dev/*i2c*`
@@ -46,7 +46,7 @@ class LidarSensor(BicycleSensor):
     try:
       self.actual_bus = smbus.SMBus(self.BUS)
     except:
-      logger.error(f"Not able ot instantiate bus number {self.BUS}")
+      logging.error(f"Not able ot instantiate bus number {self.BUS}")
       raise
 
   def writeAndWait(self):
@@ -72,7 +72,7 @@ class LidarSensor(BicycleSensor):
     '''Override to write measurement data to the CSV file.'''
     distance = str(self.getDistance()) # in cm
     datestamp, timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f").split(" ")
-    logger.info("timestamp: " + timestamp)
+    logging.info("timestamp: " + timestamp)
     data_row = f"{datestamp},{timestamp},{distance}"
     self.write_to_file(data_row)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
   ARGS = PARSER.parse_args()
 
   # Configure logging
-  logger = configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile="VTIGarminLidarLiteV3.log")
+  configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile="VTIGarminLidarLiteV3.log")
 
-  lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval, logger)
+  lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
   lidar_sensor.main()
