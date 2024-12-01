@@ -25,7 +25,7 @@ import argparse
 import logging
 import datetime, time
 
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO   # type: ignore
 
 from BicycleSensor import BicycleSensor, configure_logging
 
@@ -42,7 +42,7 @@ class ButtonSensor(BicycleSensor):
   def write_header(self):
     '''Override to write the header to the CSV file.'''
     logging.info("Writing a header to file...")
-    self.write_to_file("date,time,distance")
+    self.write_to_file("date,time,button")
 
   def write_measurement(self):
     '''Override to write measurement data to the CSV file.'''
