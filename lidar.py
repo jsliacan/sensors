@@ -16,6 +16,8 @@
 
   2. Readings of 1cm and 5cm:
   https://support.garmin.com/en-US/?faq=Y4baLgCOOY0LR7dSW0DG09
+  - 1cm : no return signal
+  - 5cm : invalid measurement condition
 
 
   - A reading of 1cm on the LIDAR-Lite v3 sensor is an indication of no return
