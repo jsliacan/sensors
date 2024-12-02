@@ -13,7 +13,7 @@ from collections import deque
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
-import requests
+import requests   # type: ignore
 
 
 def configure_logging(stdout: bool = True, rotating: bool = False, loglevel: str = 'INFO', logfile: str = 'sensor_template.log') -> logging.Logger:
@@ -176,8 +176,18 @@ class BicycleSensor(ABC):
         # created a partition called `bikedata` on it (ext4 type). That's it.
         
         # Write data to USB drive as a backup
-        #shutil.copyfile(filename, "/media/vti/bikedata/"+filename.split("/")[-1])
+        usb_path = os.path.join("/", "media", "vti", "bikedata")
+        print(usb_path, flush=True)
         
+        if os.path.exists(usb_path):
+          print("usb_path exists!")
+          sensor_usb_path = os.path.join(usb_path, self._name)
+          if not os.path.exists(sensor_usb_path):
+            os.makedirs(sensor_usb_path)
+            print("make sensor_usb_path")
+          shutil.copyfile(filename, os.path.join(sensor_usb_path, filename.split("/")[-1]))
+        
+       
         with open(filename, 'r') as file:
           csv_data = file.readlines()
 
