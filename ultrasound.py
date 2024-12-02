@@ -14,9 +14,9 @@ import argparse
 import datetime
 import logging
 
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO   # type: ignore
 
-from smbus2 import SMBus
+from smbus2 import SMBus  # type: ignore
 
 from BicycleSensor import BicycleSensor, configure_logging
 
@@ -57,10 +57,10 @@ class UltrasoundSensor(BicycleSensor):
     """
     
     if GPIO.input(self.PIN): # if GPIO port 4 is On/1/True/High
-      logging.info("Pin " + str(self.PIN) + "is 1/GPIO.HIGH/True")
+      logging.info("Pin " + str(self.PIN) + " is 1/GPIO.HIGH/True")
     else:
       distance = self.report_range()
-      logging.info("Port " + str(self.PIN) + "is 0/GPIO.LOW/False")
+      logging.info("Port " + str(self.PIN) + " is 0/GPIO.LOW/False")
       self.take_range() # do next cycle
       # write record to data file 
       datestamp, timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f").split(" ")
