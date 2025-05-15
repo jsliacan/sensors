@@ -65,7 +65,6 @@ def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearra
     """
     
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    logging.info("timestamp: " + timestamp)
     target_id_mask = 0b11111100 # mask that reveals first 6 bits; use '&' with value
     target_ids = [0 for x in range(6)]
     target_ranges = [0 for x in range(6)] # 6 targets, each 3 bytes (info, range, speed)
@@ -86,6 +85,7 @@ def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearra
             bin_target_speeds[j] = format(dat, '08b')
 
     data_row = f"{timestamp}\t{target_ids}\t{target_ranges}\t{target_speeds}\t{bin_target_speeds}\n"
+    logging.info(data_row)
     self.write_to_file(data_row)
 
 async def radar(device_address, characteristic_uuid, notification_callback):
@@ -93,14 +93,14 @@ async def radar(device_address, characteristic_uuid, notification_callback):
     Main radar function that coordinates communication with Varia radar.
     """
 
-    varia = await BleakScanner.find_device_by_address(address)
+    varia = await BleakScanner.find_device_by_address(device_address)
     
     if varia is None:
-        print("Could not find device with %s", address)
+        logging.warning("Could not find device with %s", device_address)
         return
 
     async with BleakClient(varia) as client:
-        print("Connected.", flush=True)
+        logging.info("Connected.")
         
         await client.start_notify(characteristic_uuid, notification_callback)
         # await asyncio.sleep(60.0)     # run for given time (in seconds)
@@ -110,10 +110,12 @@ async def radar(device_address, characteristic_uuid, notification_callback):
 class RadarSensor(BicycleSensor):
 
     def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
-        BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
-
+        
         self.ADDRESS = "F2:ED:49:D5:26:ED"
         self.CHAR_UUID = "6a4e3203-667b-11e3-949a-0800200c9a66" 
+        
+        BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
+
     
     def write_header(self):
         '''Override to write the header to the CSV file.'''
