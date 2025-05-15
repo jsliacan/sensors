@@ -22,8 +22,8 @@ from BicycleSensor import BicycleSensor, configure_logging
 
 class UltrasoundSensor(BicycleSensor):
 
-  def __init__(self, name, hash, measurement_frequency, upload_interval):
-    BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval)
+  def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
+    BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread=False)
 
     self.ADDRESS = 0x70
     self.PIN = 4 # GPIO numbering of the orange wire; plug it into GPIO pin 4
