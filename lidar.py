@@ -27,6 +27,7 @@
 """
 
 import argparse
+import asyncio
 import logging
 import smbus2 as smbus
 import datetime, time
@@ -35,8 +36,8 @@ from BicycleSensor import BicycleSensor, configure_logging
 
 class LidarSensor(BicycleSensor):
 
-  def __init__(self, name, hash, measurement_frequency, upload_interval):
-    BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval)
+  def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
+    BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
 
     self.BUS = 1 # on RPi5, it's bus no.1 - can check with `ls /dev/*i2c*`
     self.ADDRESS = 0x62 # get with `sudo i2cdetect -y 1`
@@ -78,6 +79,9 @@ class LidarSensor(BicycleSensor):
     data_row = f"{datestamp},{timestamp},{distance}"
     self.write_to_file(data_row)
 
+  async def worker_main(self):
+      pass 
+
 if __name__ == '__main__':
 
   PARSER = argparse.ArgumentParser(
@@ -92,10 +96,11 @@ if __name__ == '__main__':
   PARSER.add_argument('--measurement-frequency', type=float, default=50.0, help='Frequency of sensor measurements in 1/s')
   PARSER.add_argument('--stdout', action='store_true', help='Enables logging to stdout')
   PARSER.add_argument('--upload-interval', type=float, default=300.0, help='Interval between uploads in seconds')
+  PARSER.add_argument('--use_worker_thread', type=bool, default=False, help='Use a background thread for worker process or not')
   ARGS = PARSER.parse_args()
 
   # Configure logging
   configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile="VTIGarminLidarLiteV3.log")
 
-  lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
+  lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval, ARGS.use_worker_thread)
   lidar_sensor.main()
