@@ -132,21 +132,21 @@ class BicycleSensor(ABC):
     @abstractmethod
     def write_measurement(self):
         """
-        abstract method to write measurement data to the csv file.
+        Abstract method to write measurement data to the csv file.
         """
         pass
 
     @abstractmethod
     async def worker_main(self):
         """
-        abstract method to run in the background, i.e. to communicate with a
+        Abstract method to run in the background, i.e. to communicate with a
         device alongside other work.
         """
         pass
 
     def write_to_file(self, data: str):
         """
-        helper method to write data to the file.
+        Helper method to write data to the file.
         """
         if self._file:
             self._file.write(data)
@@ -154,39 +154,39 @@ class BicycleSensor(ABC):
 
     def _handle_shutdown(self, signum, frame):
         """
-        gracefully handle shutdown signals.
+        Gracefully handle shutdown signals.
         """
-        self._alive = false
+        self._alive = False
         self.upload_event.set()  # ensure thread wakes up to check _alive flag
-        logging.warning(f'shutdown due to signal {signum}')
+        logging.warning(f'Shutdown due to signal {signum}')
 
     def trigger_upload(self):
         """
-        trigger the upload event.
+        Trigger the upload event.
         """
         if self._file:
             self._file.close()
-            self._file = none
+            self._file = None
             self._upload_queue.append(self._filename)
 
-        self._filename = os.path.join('pending', datetime.now().strftime('%y%m%d_%h%m%s.csv'))
+        self._filename = os.path.join('pending', datetime.now().strftime('%Y%m%d_%H%M%S.csv'))
 
         if self._alive:
             try:
                 self._file = open(self._filename, 'w')
                 self.write_header()
-                logging.info(f"new file '{self._filename}' created")
-            except ioerror as e:
-                logging.error(f"error opening file '{self._filename}': {e}")
-                self._file = none
+                logging.info(f"New file '{self._filename}' created")
+            except IOError as e:
+                logging.error(f"Error opening file '{self._filename}': {e}")
+                self._file = None
         self.upload_event.set()
 
     def _upload_data_loop(self):
         """
-        the main loop that runs in a separate thread to handle data uploads.
+        The main loop that runs in a separate thread to handle data uploads.
         """
         while self._alive:
-            self.upload_event.wait()  # wait until the event is set
+            self.upload_event.wait()  # Wait until the event is set
             self._upload_data()       # Perform the upload
             self.upload_event.clear() # Reset the event to pause the thread
 
@@ -213,7 +213,6 @@ class BicycleSensor(ABC):
 
                 # Write data to USB drive as a backup
                 usb_path = os.path.join("/", "media", "vti", "bikedata")
-                print(usb_path, flush=True)
 
                 if os.path.exists(usb_path):
                     print("usb_path exists!")
