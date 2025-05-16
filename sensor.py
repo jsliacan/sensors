@@ -1,21 +1,33 @@
 #!/usr/bin/env python3
 
 import argparse
+import random
 import time
+from datetime import datetime
 
 from BicycleSensor import BicycleSensor, configure
 
 
 class SensorTemplate(BicycleSensor):
   '''Example subclass that implements the abstract methods of BicycleSensor.'''
+
   def write_header(self):
-    '''Override to write the header to the CSV file.'''
-    self.write_to_file('time')
+    '''Write the CSV header.'''
+    return 'timestamp,button'
 
-  def write_measurement(self):
-    '''Override to write measurement data to the CSV file.'''
-    self.write_to_file(str(time.time()))
+  def write_measurement(self, data=None):
+    '''Handle both periodic and event-based measurements.'''
+    timestamp = datetime.now().isoformat()
+    event_type = 1 if data else 0
+    self.data_buffer.append(f"{timestamp},{event_type}")
 
+  def background_worker(self):
+    '''Return the function to run in the background thread.'''
+    def worker():
+      while self.alive:
+        time.sleep(random.uniform(1, 3))  # Random interval between button presses
+        self.write_measurement(data=True)  # Simulate a button press event
+    return worker
 
 if __name__ == '__main__':
   PARSER = argparse.ArgumentParser(
@@ -34,5 +46,6 @@ if __name__ == '__main__':
   # Configure logging
   configure(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel)
 
+  # Instantiate and run the sensor
   sensor = SensorTemplate(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
   sensor.main()
