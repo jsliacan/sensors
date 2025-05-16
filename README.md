@@ -5,38 +5,46 @@
 Each device (sensor) needs to have the relevant section updated in the config on the server. This is the example section for the sensors in this repository.
 
 ```json
-"sensors":[
-   {
-      "args":[
-         "--upload-interval",
-         "5"
+{
+  "hostname": "rpi",
+  "username": "vti",
+  "mac_address": "2c:cf:67:28:80:0a",
+  "registration": "2024-09-02T11:53:49.694564Z",
+  "sensors": [
+    {
+      "args": [
+        "--upload-interval",
+        "5"
       ],
-      "entry_point":"lidar.py",
-      "git_url":"https://github.com/jsliacan/sensors.git",
-      "git_version":"main",
-      "name":"VTIGarminLidarLiteV3"
-   },
-   {
-      "args":[
-         "--upload-interval",
-         "5"
+      "entry_point": "radar.py",
+      "git_url": "https://github.com/jsliacan/sensors.git",
+      "git_version": "varia",
+      "name": "VTIGarminVariaRCT716"
+    },
+    {
+      "args": [
+        "--upload-interval",
+        "5"
       ],
-      "entry_point":"button.py",
-      "git_url":"https://github.com/jsliacan/sensors.git",
-      "git_version":"main",
-      "name":"VTIButton"
-   },
-   {
-      "args":[
-         "--upload-interval",
-         "5"
+      "entry_point": "lidar.py",
+      "git_url": "https://github.com/jsliacan/sensors.git",
+      "git_version": "varia",
+      "name": "VTIGarminLidarLiteV3"
+    },
+    {
+      "args": [
+        "--upload-interval",
+        "5"
       ],
-      "entry_point":"ultrasound.py",
-      "git_url":"https://github.com/jsliacan/sensors.git",
-      "git_version":"main",
-      "name":"VTIUltrasound"
-   }
-]
+      "entry_point": "button.py",
+      "git_url": "https://github.com/jsliacan/sensors.git",
+      "git_version": "varia",
+      "name": "VTIButton"
+    }
+  ],
+  "project": "validation",
+  "model": "CardiLidar"
+}
 ```
 ## Backing up data onto USB-storage
 
