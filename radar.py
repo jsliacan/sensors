@@ -47,6 +47,9 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from BicycleSensor import BicycleSensor, configure_logging
 
+SENSOR_NAME="VTIGarminVariaRCT716"
+SENSOR_ADDRESS="F2:ED:49:D5:26:ED"  # change to your own Varia's MAC address
+
 def bin2dec(n):
     """
     Convert floating point binary (exponent=-2) to decimal float.
@@ -58,61 +61,13 @@ def bin2dec(n):
         fractional_part += 0.5
     return fractional_part + (n>>2)
 
-def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearray):
-    """
-    Simple notification handler which processes the data received into a
-    CSV row and prints it into a file.
-    """
-    
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    target_id_mask = 0b11111100 # mask that reveals first 6 bits; use '&' with value
-    target_ids = [0 for x in range(6)]
-    target_ranges = [0 for x in range(6)] # 6 targets, each 3 bytes (info, range, speed)
-    target_speeds = [0.0 for x in range(6)]
-    bin_target_speeds = ["" for x in range(6)]
-
-    # data is a bytearray
-    intdata = [x for x in data]
-    j = 0 # target index
-    for i, dat in enumerate(intdata[1:]): # ignore flags in pos 0
-        if i%3 == 0: # each target has 3 bytes
-            j = i//3
-            target_ids[j] = (dat & target_id_mask)
-        elif i%3 == 1:
-            target_ranges[j] = dat
-        else: 
-            target_speeds[j] = bin2dec(dat)
-            bin_target_speeds[j] = format(dat, '08b')
-
-    data_row = f"{timestamp}\t{target_ids}\t{target_ranges}\t{target_speeds}\t{bin_target_speeds}\n"
-    logging.info(data_row)
-    self.write_to_file(data_row)
-
-async def radar(device_address, characteristic_uuid, notification_callback):
-    """
-    Main radar function that coordinates communication with Varia radar.
-    """
-
-    varia = await BleakScanner.find_device_by_address(device_address)
-    
-    if varia is None:
-        logging.warning("Could not find device with %s", device_address)
-        return
-
-    async with BleakClient(varia) as client:
-        logging.info("Connected.")
-        
-        await client.start_notify(characteristic_uuid, notification_callback)
-        # await asyncio.sleep(60.0)     # run for given time (in seconds)
-        await asyncio.Future()  # run indefinitely
-        # await client.stop_notify(RADAR_CHAR_UUID)  # use with asyncio.sleep()
 
 class RadarSensor(BicycleSensor):
 
     def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
         
-        self.ADDRESS = "F2:ED:49:D5:26:ED"
-        self.CHAR_UUID = "6a4e3203-667b-11e3-949a-0800200c9a66" 
+        self.ADDRESS = SENSOR_ADDRESS
+        self.CHAR_UUID = "6a4e3203-667b-11e3-949a-0800200c9a66" # same for all Varias
         
         BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
 
@@ -130,7 +85,57 @@ class RadarSensor(BicycleSensor):
         """
         Implementation of the function that runs in the worker thread.
         """
-        asyncio.run(radar(self.ADDRESS, self.CHAR_UUID, notification_handler))
+        asyncio.run(self.radar())
+
+    def notification_handler(self, characteristic: BleakGATTCharacteristic, data: bytearray):
+        """
+        Simple notification handler which processes the data received into a
+        CSV row and prints it into a file.
+        """
+        
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        target_id_mask = 0b11111100 # mask that reveals first 6 bits; use '&' with value
+        target_ids = [0 for x in range(6)]
+        target_ranges = [0 for x in range(6)] # 6 targets, each 3 bytes (info, range, speed)
+        target_speeds = [0.0 for x in range(6)]
+        bin_target_speeds = ["" for x in range(6)]
+
+        # data is a bytearray
+        intdata = [x for x in data]
+        j = 0 # target index
+        for i, dat in enumerate(intdata[1:]): # ignore flags in pos 0
+            if i%3 == 0: # each target has 3 bytes
+                j = i//3
+                target_ids[j] = (dat & target_id_mask)
+            elif i%3 == 1:
+                target_ranges[j] = dat
+            else: 
+                target_speeds[j] = bin2dec(dat)
+                bin_target_speeds[j] = format(dat, '08b')
+
+        data_row = f"{timestamp}\t{target_ids}\t{target_ranges}\t{target_speeds}\t{bin_target_speeds}\n"
+        logging.info(data_row)
+        self.write_to_file(data_row)
+
+    async def radar(self):
+        """
+        Main radar function that coordinates communication with Varia radar.
+        """
+
+        varia = await BleakScanner.find_device_by_address(self.ADDRESS)
+        
+        if varia is None:
+            logging.warning("Could not find device with %s", self.ADDRESS)
+            return
+
+        async with BleakClient(varia) as client:
+            logging.info("Connected.")
+            
+            await client.start_notify(self.CHAR_UUID, self.notification_handler)
+            # await asyncio.sleep(60.0)     # run for given time (in seconds)
+            await asyncio.Future()  # run indefinitely
+            # await client.stop_notify(RADAR_CHAR_UUID)  # use with asyncio.sleep()
+
 
 if __name__ == '__main__':
 
@@ -141,7 +146,7 @@ if __name__ == '__main__':
     )
 
     PARSER.add_argument('--hash', type=str, required=True, help='[required] hash of the device')
-    PARSER.add_argument('--name', type=str, default="VTIGarminVariaRCT716", help='[required] name of the sensor')
+    PARSER.add_argument('--name', type=str, default=SENSOR_NAME, help='[required] name of the sensor')
     PARSER.add_argument('--loglevel', type=str, default='DEBUG', help='Set the logging level (e.g., DEBUG, INFO, WARNING)')
     PARSER.add_argument('--measurement-frequency', type=float, default=1.0, help='Not utilized')
     PARSER.add_argument('--stdout', action='store_true', help='Enables logging to stdout')
@@ -153,7 +158,7 @@ if __name__ == '__main__':
     configure_logging(stdout=ARGS.stdout,
                       rotating=True,
                       loglevel=ARGS.loglevel,
-                      logfile="VTIGarminVariaRCT716.log")
+                      logfile=f"{SENSOR_NAME}.log")
 
     radar_sensor = RadarSensor(ARGS.name,
                                ARGS.hash,
