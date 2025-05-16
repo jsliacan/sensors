@@ -50,9 +50,9 @@ class ButtonSensor(BicycleSensor):
 
   def write_measurement(self):
     '''Override to write measurement data to the CSV file.'''
-    datestamp, timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f").split(" ")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
     logging.info("timestamp: " + timestamp)
-    data_row = f"{datestamp},{timestamp},{1 if GPIO.input(self.PIN) else 0}"
+    data_row = f"{timestamp},{1 if GPIO.input(self.PIN) else 0}"
     self.write_to_file(data_row)
 
 if __name__ == '__main__':

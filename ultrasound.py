@@ -63,9 +63,9 @@ class UltrasoundSensor(BicycleSensor):
       logging.info("Port " + str(self.PIN) + " is 0/GPIO.LOW/False")
       self.take_range() # do next cycle
       # write record to data file 
-      datestamp, timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f").split(" ")
+      timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
       logging.info("timestamp: " + timestamp + ", distance: " + distance)
-      data_row = f"{datestamp},{timestamp},{distance}"
+      data_row = f"{timestamp},{distance}"
       self.write_to_file(data_row)
 
 
