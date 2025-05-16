@@ -30,6 +30,8 @@ import RPi.GPIO as GPIO   # type: ignore
 
 from BicycleSensor import BicycleSensor, configure_logging
 
+SENSOR_NAME="VTIButton"
+
 class ButtonSensor(BicycleSensor):
 
   def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
@@ -64,7 +66,7 @@ if __name__ == '__main__':
   )
 
   PARSER.add_argument('--hash', type=str, required=True, help='[required] hash of the device')
-  PARSER.add_argument('--name', type=str, default="VTIButton", help='[required] name of the sensor')
+  PARSER.add_argument('--name', type=str, default=SENSOR_NAME, help='[required] name of the sensor')
   PARSER.add_argument('--loglevel', type=str, default='DEBUG', help='Set the logging level (e.g., DEBUG, INFO, WARNING)')
   PARSER.add_argument('--measurement-frequency', type=float, default=50.0, help='Frequency of sensor measurements in 1/s')
   PARSER.add_argument('--stdout', action='store_true', help='Enables logging to stdout')
@@ -73,7 +75,7 @@ if __name__ == '__main__':
   ARGS = PARSER.parse_args()
 
   # Configure logging
-  configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile="VTIButton.log")
+  configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile=f"{SENSOR_NAME}.log")
 
   button_sensor = ButtonSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval, ARGS.use_worker_thread)
   button_sensor.main()
