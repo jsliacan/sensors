@@ -48,7 +48,7 @@ class ButtonSensor(BicycleSensor):
   def write_header(self):
     '''Override to write the header to the CSV file.'''
     logging.info("Writing a header to file...")
-    self.write_to_file("date,time,button")
+    self.write_to_file("timestamp,button")
 
   def write_measurement(self):
     '''Override to write measurement data to the CSV file.'''
