@@ -48,13 +48,15 @@ class ButtonSensor(BicycleSensor):
   def write_header(self):
     '''Override to write the header to the CSV file.'''
     logging.info("Writing a header to file...")
-    self.write_to_file("timestamp,button")
+    self.write_to_file("unix_timestamp,datetime,button")
 
   def write_measurement(self):
     '''Override to write measurement data to the CSV file.'''
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    logging.info("timestamp: " + timestamp)
-    data_row = f"{timestamp},{1 if GPIO.input(self.PIN) else 0}"
+    dt = datetime.datetime.now()
+    dt_str = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+    dt_unix = dt.timestamp()
+    logging.info("timestamp: " + dt_str)
+    data_row = f"{dt_unix},{dt_str},{1 if GPIO.input(self.PIN) else 0}"
     self.write_to_file(data_row)
 
 if __name__ == '__main__':
