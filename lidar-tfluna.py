@@ -21,8 +21,8 @@ from BicycleSensor import BicycleSensor, configure_logging
 
 class LidarSensor(BicycleSensor):
 
-    def __init__(self, name, hash, measurement_frequency, upload_interval):
-        BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval)
+    def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
+        BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
 
         self.BUS = 1 # on RPi5, it's bus no.1 - can check with `ls /dev/*i2c*`
         self.ADDRESS = 0x10 # get with `sudo i2cdetect -y 1`
@@ -33,6 +33,9 @@ class LidarSensor(BicycleSensor):
         except:
             logging.error(f"Not able ot instantiate bus number {self.BUS}")
             raise
+
+    async def worker_main(self):
+        pass 
 
     def get_data(self):
         self.actual_bus.write_i2c_block_data(self.ADDRESS, 0x00, self.DATA_CMD)
@@ -75,10 +78,11 @@ if __name__ == '__main__':
     PARSER.add_argument('--measurement-frequency', type=float, default=120.0, help='Frequency of sensor measurements in 1/s')
     PARSER.add_argument('--stdout', action='store_true', help='Enables logging to stdout')
     PARSER.add_argument('--upload-interval', type=float, default=300.0, help='Interval between uploads in seconds')
+    PARSER.add_argument('--use_worker_thread', type=bool, default=False, help='Use a background thread for worker process or not')
     ARGS = PARSER.parse_args()
 
     # Configure logging
     configure_logging(stdout=ARGS.stdout, rotating=True, loglevel=ARGS.loglevel, logfile="VTITFLunaLidar.log")
 
-    lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval)
+    lidar_sensor = LidarSensor(ARGS.name, ARGS.hash, ARGS.measurement_frequency, ARGS.upload_interval, ARGS.use_worker_thread)
     lidar_sensor.main()
