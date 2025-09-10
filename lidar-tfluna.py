@@ -58,7 +58,7 @@ class LidarSensor(BicycleSensor):
         dt_unix = dt.timestamp()
         logging.info("timestamp: " + dt_str)
         # write data
-        data_row = f"{dt_unix},{dt_str},{distance},{distance},{strength},{temperature}"
+        data_row = f"{dt_unix},{dt_str},{distance},{strength},{temperature}"
         self.write_to_file(data_row)
 
 if __name__ == '__main__':
