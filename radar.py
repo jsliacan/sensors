@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Garmin Varia Radar RCT716
+Garmin Varia Radar RCT716/RVR315
 
-- Address: "F2:ED:49:D5:26:ED" with name "RCT716-19942" or similar
+- Address: such as "F2:ED:49:D5:26:ED" with name "RCT716-19942" (radar+camera+light) or "RVR52497" (RVR315 only radar, no camera or light)
 - Characteristic UUID: "6A4E3203-667B-11E3-949A-0800200C9A66", handle: 188 (int)
 
 Target encoding
@@ -47,8 +47,8 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from BicycleSensor import BicycleSensor, configure_logging
 
-SENSOR_NAME="VTIGarminVariaRCT716"
-SENSOR_ADDRESS="F2:ED:49:D5:26:ED"  # change to your own Varia's MAC address
+SENSOR_NAME="VTIGarminVariaRVR52497"
+SENSOR_ADDRESS="F7:ED:94:CC:95:AE"
 
 def bin2dec(n):
     """
@@ -76,7 +76,7 @@ class RadarSensor(BicycleSensor):
         '''Override to write the header to the CSV file.'''
         
         logging.info("Writing a header to file...")
-        self.write_to_file("datetime,target_ids,target_ranges,target_speeds,bin_target_speeds")
+        self.write_to_file("unix_timestamp,datetime,target_ids,target_ranges,target_speeds,bin_target_speeds")
 
     def write_measurement(self):
         pass 
@@ -93,7 +93,9 @@ class RadarSensor(BicycleSensor):
         CSV row and prints it into a file.
         """
         
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        dt = datetime.datetime.now()
+        dt_str = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+        dt_unix = dt.timestamp()
         target_id_mask = 0b11111100 # mask that reveals first 6 bits; use '&' with value
         target_ids = [0 for x in range(6)]
         target_ranges = [0 for x in range(6)] # 6 targets, each 3 bytes (info, range, speed)
@@ -113,7 +115,7 @@ class RadarSensor(BicycleSensor):
                 target_speeds[j] = bin2dec(dat)
                 bin_target_speeds[j] = format(dat, '08b')
 
-        data_row = f"{timestamp}\t{target_ids}\t{target_ranges}\t{target_speeds}\t{bin_target_speeds}\n"
+        data_row = f"{dt_unix},{dt_str},{target_ids},{target_ranges},{target_speeds},{bin_target_speeds}"
         logging.info(data_row)
         self.write_to_file(data_row)
 
