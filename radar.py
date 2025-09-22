@@ -76,7 +76,7 @@ class RadarSensor(BicycleSensor):
         '''Override to write the header to the CSV file.'''
         
         logging.info("Writing a header to file...")
-        self.write_to_file("unix_timestamp,datetime,target_ids,target_ranges,target_speeds,bin_target_speeds")
+        self.write_to_file("unix_timestamp\tdatetime\ttarget_ids\ttarget_ranges\ttarget_speeds\tbin_target_speeds")
 
     def write_measurement(self):
         pass 
@@ -115,7 +115,7 @@ class RadarSensor(BicycleSensor):
                 target_speeds[j] = bin2dec(dat)
                 bin_target_speeds[j] = format(dat, '08b')
 
-        data_row = f"{dt_unix},{dt_str},{target_ids},{target_ranges},{target_speeds},{bin_target_speeds}"
+        data_row = f"{dt_unix}\t{dt_str}\t{target_ids}\t{target_ranges}\t{target_speeds}\t{bin_target_speeds}"
         logging.info(data_row)
         self.write_to_file(data_row)
 

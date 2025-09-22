@@ -50,7 +50,7 @@ class LidarSensor(BicycleSensor):
 
     def write_header(self):
         logging.info("writing a header to file...")
-        self.write_to_file("unix_timestamp,datetime,distance,strength,temperature")
+        self.write_to_file("unix_timestamp\tdatetime\tdistance\tstrength\ttemperature")
 
     def write_measurement(self):
         distance, strength, temperature = self.get_data()
@@ -61,7 +61,7 @@ class LidarSensor(BicycleSensor):
         dt_unix = dt.timestamp()
         logging.info("timestamp: " + dt_str)
         # write data
-        data_row = f"{dt_unix},{dt_str},{distance},{strength},{temperature}"
+        data_row = f"{dt_unix}\t{dt_str}\t{distance}\t{strength}\t{temperature}"
         self.write_to_file(data_row)
 
 if __name__ == '__main__':

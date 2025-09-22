@@ -71,7 +71,7 @@ class LidarSensor(BicycleSensor):
   def write_header(self):
     '''Override to write the header to the CSV file.'''
     logging.info("Writing a header to file...")
-    self.write_to_file("unix_timestamp,datetime,distance")
+    self.write_to_file("unix_timestamp\tdatetime\tdistance")
 
   def write_measurement(self):
     '''Override to write measurement data to the CSV file.'''
@@ -80,7 +80,7 @@ class LidarSensor(BicycleSensor):
     dt_str = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
     dt_unix = dt.timestamp()
     logging.info("timestamp: " + dt_str)
-    data_row = f"{dt_unix},{dt_str},{distance}"
+    data_row = f"{dt_unix}\t{dt_str}\t{distance}"
     self.write_to_file(data_row)
 
   async def worker_main(self):
