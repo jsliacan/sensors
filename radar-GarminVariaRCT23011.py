@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Garmin Varia Radar RCT716/RVR315
+Garmin Varia Radar RCT716
 
-- Address: such as "F2:ED:49:D5:26:ED" with name "RCT716-19942" (radar+camera+light) or "RVR52497" (RVR315 only radar, no camera or light)
+- Address: such as "C1:1A:18:51:69:FC" with name "RCT716-23011" (radar+camera+light)
 - Characteristic UUID: "6A4E3203-667B-11E3-949A-0800200C9A66", handle: 188 (int)
 
 Target encoding
@@ -47,8 +47,8 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from BicycleSensor import BicycleSensor, configure_logging
 
-SENSOR_NAME="VTIGarminVariaRVR52497"
-SENSOR_ADDRESS="F7:ED:94:CC:95:AE"
+SENSOR_NAME="VTIGarminVariaRCT23011"
+SENSOR_ADDRESS="C1:1A:18:51:69:FC"
 
 def bin2dec(n):
     """
