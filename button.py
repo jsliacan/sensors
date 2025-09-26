@@ -19,6 +19,16 @@
     set a pull-down in software so that when you switch is pressed then the
     GPIO pin will be pull-up. So while the switch is not pressed you GPIO input
     would return a 0 or false, and when pressed it would return a 1 or true.
+
+  Note2:
+    On RPi, install drop-in for RPi.GPIO. See notes in:
+
+    https://gist.github.com/jsliacan/6130116bc3b72997328e72ce21cb7b60
+    
+    ```
+    sudo apt remove python3-rpi.gpio
+    sudo apt install python3-rpi.lgpio
+    ```
 """
 
 import argparse
