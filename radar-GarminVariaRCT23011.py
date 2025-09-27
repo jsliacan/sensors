@@ -49,6 +49,7 @@ from BicycleSensor import BicycleSensor, configure_logging
 
 SENSOR_NAME="VTIGarminVariaRCT23011"
 SENSOR_ADDRESS="C1:1A:18:51:69:FC"
+SENSOR_SHORT_NAME="RCT716-23011"
 
 def bin2dec(n):
     """
@@ -67,6 +68,7 @@ class RadarSensor(BicycleSensor):
     def __init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread):
         
         self.ADDRESS = SENSOR_ADDRESS
+        self.NAME = SENSOR_SHORT_NAME
         self.CHAR_UUID = "6a4e3203-667b-11e3-949a-0800200c9a66" # same for all Varias
         
         BicycleSensor.__init__(self, name, hash, measurement_frequency, upload_interval, use_worker_thread)
@@ -119,24 +121,36 @@ class RadarSensor(BicycleSensor):
         logging.info(data_row)
         self.write_to_file(data_row)
 
-    async def radar(self):
+    async def scan(self):
         """
-        Main radar function that coordinates communication with Varia radar.
+        Scan for the correct Varia.
         """
+        return await BleakScanner.find_device_by_name(self.NAME)
 
-        varia = await BleakScanner.find_device_by_address(self.ADDRESS)
-        
-        if varia is None:
-            logging.warning("Could not find device with %s", self.ADDRESS)
-            return
-
-        async with BleakClient(varia) as client:
+    async def connect(self, device):
+        """
+        Connect to the correct Varia.
+        """
+        async with BleakClient(device) as client:
             logging.info("Connected.")
             
             await client.start_notify(self.CHAR_UUID, self.notification_handler)
             # await asyncio.sleep(60.0)     # run for given time (in seconds)
             await asyncio.Future()  # run indefinitely
             # await client.stop_notify(RADAR_CHAR_UUID)  # use with asyncio.sleep()
+
+
+    async def radar(self):
+        """
+        Main radar function that coordinates communication with Varia radar.
+        """
+
+        varia = await self.scan() # find the BLEDevice we are looking for
+        if not varia:
+            logging.warning("Device not found")
+            return
+
+        await self.connect(varia)
 
 
 if __name__ == '__main__':
